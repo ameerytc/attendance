@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block content %}
+<nav class="actions section no-print" aria-label="Settings sections">
+  <a class="btn btn-outline btn-sm" href="#school-info">School information</a>
+  <a class="btn btn-outline btn-sm" href="#logo">School logo</a>
+  <a class="btn btn-outline btn-sm" href="#academic">Academic settings</a>
+  <a class="btn btn-outline btn-sm" href="#account">Account</a>
+</nav>
+
+<div class="section" id="school-info">
+  <h2>A. School information</h2>
+  <p style="color:var(--color-text-muted);font-size:13px;">Shown on the login page, dashboards, sidebar and every PDF report.</p>
+  <form method="post" action="{{ url_for('school_admin.settings_school') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <fieldset class="editable" id="school-form" disabled>
+      <div class="form-group"><label for="school_name">School name</label><input type="text" id="school_name" name="school_name" value="{{ settings.school_name }}" maxlength="150" required></div>
+      <div class="form-group"><label for="school_name_arabic">Arabic name (optional)</label><input type="text" id="school_name_arabic" name="school_name_arabic" class="rtl" value="{{ settings.school_name_arabic or '' }}"></div>
+      <div class="form-group"><label for="motto">Motto</label><input type="text" id="motto" name="motto" value="{{ settings.motto or '' }}" maxlength="200"></div>
+      <div class="form-group"><label for="address">Address</label><input type="text" id="address" name="address" value="{{ settings.address or '' }}" maxlength="300"></div>
+      <div class="form-group"><label for="phone">Phone number</label><input type="tel" id="phone" name="phone" value="{{ settings.phone or '' }}" maxlength="40"></div>
+      <div class="form-group"><label for="email">Email address</label><input type="email" id="email" name="email" value="{{ settings.email or '' }}"></div>
+      <div class="form-group"><label for="website">Website</label><input type="url" id="website" name="website" value="{{ settings.website or '' }}" placeholder="https://"></div>
+      <div class="form-group"><label for="contact_info">Other contact information</label><textarea id="contact_info" name="contact_info" rows="3" maxlength="500">{{ settings.contact_info or '' }}</textarea></div>
+    </fieldset>
+    <div class="actions">
+      <button type="button" class="btn btn-outline" data-edit-toggle="school-form">Edit</button>
+      <button type="submit" class="btn btn-primary" id="school-form-save" hidden>Save</button>
+    </div>
+  </form>
+</div>
+
+<div class="section" id="logo">
+  <h2>B. School logo</h2>
+  {% if not storage.configured %}
+    <div class="notice notice-error"><strong>Logo uploads are disabled.</strong> {{ storage.message }}</div>
+  {% elif not storage.persistent %}
+    <div class="notice notice-warning">{{ storage.message }}</div>
+  {% else %}
+    <div class="notice">{{ storage.message }}</div>
+  {% endif %}
+  <div class="actions" style="margin-bottom:12px;">
+    {% if school_logo_url %}<img src="{{ school_logo_url }}" alt="Current logo" class="logo-preview">{% else %}<span>No logo set.</span>{% endif %}
+    <img id="logo-preview" class="logo-preview" alt="Preview of the selected logo" hidden>
+  </div>
+  <form method="post" action="{{ url_for('school_admin.settings_logo_upload') }}" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group">
+      <label for="logo-input">Upload logo (PNG, JPG, JPEG or WebP, max 2 MB)</label>
+      <input type="file" id="logo-input" name="logo" accept="image/png,image/jpeg,image/webp" {% if not storage.configured %}disabled{% endif %}>
+      <small id="logo-msg" role="status"></small>
+    </div>
+    <div class="actions">
+      <button type="submit" class="btn btn-primary" id="logo-save" disabled>Save logo</button>
+    </div>
+  </form>
+  {% if school_logo_url %}
+  <form method="post" action="{{ url_for('school_admin.settings_logo_remove') }}" data-confirm="Remove the school logo everywhere?" style="margin-top:10px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-outline btn-sm">Remove logo</button>
+  </form>
+  {% endif %}
+</div>
+
+<div class="section" id="academic">
+  <h2>C. Academic settings</h2>
+  <p>Current session: <strong>{{ active_session.name if active_session else 'none' }}</strong> · Active term: <strong>{{ active_term.name if active_term else 'none' }}</strong>.
+     Manage sessions and term dates on <a href="{{ url_for('school_admin.academic_sessions') }}">Academic Sessions</a>.</p>
+  <h3>Sessions</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Session</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+    <tbody>{% for s in sessions %}<tr><td>{{ s.name }}</td><td>{{ s.start_date }}</td><td>{{ s.end_date }}</td><td>{{ s.status|capitalize }}</td></tr>{% else %}<tr><td colspan="4">None yet.</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% if terms %}
+  <h3>Terms of {{ ctx.session.name }}</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Term</th><th>Start</th><th>End</th><th>Status</th></tr></thead>
+    <tbody>{% for t in terms %}<tr><td>{{ t.name }}</td><td>{{ t.start_date }}</td><td>{{ t.end_date }}</td><td>{{ t.status|capitalize }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% endif %}
+
+  <form method="post" action="{{ url_for('school_admin.settings_academic') }}" data-confirm="Save academic settings? Changing the current session or term takes effect immediately.">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h3>Current session and term</h3>
+    <div class="filter-bar">
+      <div class="form-group"><label for="current_session_id">Make this session current</label>
+        <select id="current_session_id" name="current_session_id"><option value="">— no change —</option>
+          {% for s in sessions if s.status in ('upcoming','closed') %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></div>
+      <div class="form-group"><label for="current_term_id">Make this term active</label>
+        <select id="current_term_id" name="current_term_id"><option value="">— no change —</option>
+          {% for t in terms if t.status != 'active' %}<option value="{{ t.id }}">{{ ctx.session.name }} · {{ t.name }}</option>{% endfor %}</select></div>
+    </div>
+    <h3>Attendance rules</h3>
+    <div class="form-group"><label for="timezone">School timezone (decides what "today" means)</label><input type="text" id="timezone" name="timezone" value="{{ settings.timezone }}"></div>
+    <div class="form-group"><label for="attendance_threshold_pct">Low-attendance threshold (%)</label><input type="number" step="0.1" min="0" max="100" id="attendance_threshold_pct" name="attendance_threshold_pct" value="{{ settings.attendance_threshold_pct }}"></div>
+    <div class="form-group"><label for="late_after_minutes">Late after (minutes from session start)</label><input type="number" min="0" id="late_after_minutes" name="late_after_minutes" value="{{ settings.late_after_minutes }}"></div>
+    <div class="form-group"><label for="session_default_minutes">Default attendance session length (minutes)</label><input type="number" min="1" id="session_default_minutes" name="session_default_minutes" value="{{ settings.session_default_minutes }}"></div>
+    <div class="form-group"><label for="qr_token_ttl_seconds">QR token lifetime (seconds)</label><input type="number" min="10" id="qr_token_ttl_seconds" name="qr_token_ttl_seconds" value="{{ settings.qr_token_ttl_seconds }}"></div>
+    <div class="form-group"><label><input type="checkbox" name="enable_face_verification" {% if settings.enable_face_verification %}checked{% endif %}> Enable face verification</label></div>
+    <div class="form-group"><label><input type="checkbox" name="enable_qr_verification" {% if settings.enable_qr_verification %}checked{% endif %}> Enable QR verification</label></div>
+    <p style="font-size:13px;color:var(--color-text-muted);">Percentage rule: (present + late) ÷ (present + late + absent). Excused entries are excluded and days without an attendance session are never counted as absences.</p>
+    <button type="submit" class="btn btn-primary">Save academic settings</button>
+  </form>
+</div>
+
+<div class="section" id="account">
+  <h2>D. Account</h2>
+  <form method="post" action="{{ url_for('school_admin.settings_account') }}" style="max-width:480px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="form-group"><label for="acc_name">Full name</label><input type="text" id="acc_name" name="full_name" value="{{ g.user.full_name }}" required></div>
+    <div class="form-group"><label for="acc_email">Email</label><input type="email" id="acc_email" name="email" value="{{ g.user.email }}" required></div>
+    <h3>Change password</h3>
+    <div class="form-group"><label for="current_password">Current password</label><input type="password" id="current_password" name="current_password" autocomplete="current-password"></div>
+    <div class="form-group"><label for="new_password">New password (min 10 characters)</label><input type="password" id="new_password" name="new_password" minlength="10" autocomplete="new-password"></div>
+    <div class="form-group"><label for="confirm_password">Confirm new password</label><input type="password" id="confirm_password" name="confirm_password" minlength="10" autocomplete="new-password"></div>
+    <button type="submit" class="btn btn-primary">Save account</button>
+  </form>
+</div>
+{% endblock %}

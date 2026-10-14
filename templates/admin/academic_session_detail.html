@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import pct_badge, lifecycle_badge %}
+{% block title %}{{ session_row.name }}{% endblock %}
+{% block page_title %}Session {{ session_row.name }}{% endblock %}
+{% block content %}
+<div class="section">
+  <p>{{ lifecycle_badge(session_row.status) }} {{ session_row.start_date }} → {{ session_row.end_date }}</p>
+  <div class="actions">
+    <a class="btn btn-outline btn-sm" href="{{ url_for('reports.records_search', session_id=session_row.id, term_id='all') }}">All attendance records</a>
+    <a class="btn btn-outline btn-sm" href="{{ url_for('reports.session_report', session_id=session_row.id) }}">Full-session report</a>
+    <a class="btn btn-outline btn-sm" href="{{ url_for('school_admin.academic_sessions') }}">Back</a>
+  </div>
+</div>
+<div class="section">
+  <h2>Attendance by term</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Term</th><th>Status</th><th>Present</th><th>Late</th><th>Absent</th><th>Excused</th><th>%</th><th></th></tr></thead>
+    <tbody>
+    {% for t in terms %}{% set r = per_term.get(t.id) %}
+      <tr><td>{{ t.name }}</td><td>{{ lifecycle_badge(t.status) }}</td>
+        <td>{{ r.present if r else 0 }}</td><td>{{ r.late if r else 0 }}</td><td>{{ r.absent if r else 0 }}</td><td>{{ r.excused if r else 0 }}</td>
+        <td>{{ pct_badge(r.pct if r else none) }}</td>
+        <td><a href="{{ url_for('reports.term_report', session_id=session_row.id, term_id=t.id) }}">Report</a> · <a href="{{ url_for('reports.records_search', session_id=session_row.id, term_id=t.id) }}">Records</a></td></tr>
+    {% endfor %}
+      <tr><th>Whole session</th><td></td><th>{{ totals.present }}</th><th>{{ totals.late }}</th><th>{{ totals.absent }}</th><th>{{ totals.excused }}</th><th>{{ pct_badge(totals.pct) }}</th><td></td></tr>
+    </tbody></table></div>
+</div>
+<div class="section">
+  <h2>By class</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Class</th><th>Present</th><th>Late</th><th>Absent</th><th>%</th><th></th></tr></thead>
+    <tbody>{% for c in per_class %}<tr><td>{{ c.class_name }}</td><td>{{ c.present }}</td><td>{{ c.late }}</td><td>{{ c.absent }}</td><td>{{ pct_badge(c.pct) }}</td>
+      <td><a href="{{ url_for('reports.class_report', class_id=c.class_id, session_id=session_row.id, term_id='all') }}">Class report</a></td></tr>
+      {% else %}<tr><td colspan="6">No attendance recorded in this session.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}

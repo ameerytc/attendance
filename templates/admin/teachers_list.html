@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "partials/ios_icons.html" import avatar %}
+{% block title %}Teachers{% endblock %}
+{% block page_title %}Teachers{% endblock %}
+{% block content %}
+<div class="section">
+  <div class="actions" style="justify-content:space-between;">
+    <div class="actions">
+      <a class="btn btn-primary" href="{{ url_for('admin_people.teacher_new') }}">Add teacher</a>
+      <a class="btn btn-outline" href="{{ url_for('admin_people.teachers_bulk') }}">Bulk add teachers</a>
+    </div>
+    <div class="actions">
+      <a class="btn btn-outline btn-sm" href="{{ url_for('admin_people.teachers_export_csv', q=q, status=status) }}">Export list (CSV)</a>
+      <a class="btn btn-outline btn-sm" href="{{ url_for('admin_people.teachers_export_pdf', q=q, status=status) }}">Export list (PDF)</a>
+    </div>
+  </div>
+  <form method="get" class="filter-bar" style="margin-top:12px;">
+    <div class="form-group"><label for="q">Search</label><input id="q" name="q" type="search" value="{{ q }}" placeholder="Name, ID, email, phone" data-filter-table="teachers-table"></div>
+    <div class="form-group"><label for="status">Status</label><select id="status" name="status"><option value="">All</option><option value="active" {% if status == 'active' %}selected{% endif %}>Active</option><option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive</option></select></div>
+    <div class="form-group"><button class="btn btn-outline" type="submit">Filter</button></div>
+  </form>
+  <p style="color:var(--color-text-muted);font-size:13px;">The exported list never contains passwords.</p>
+</div>
+<div class="section"><div class="table-wrap"><table id="teachers-table">
+  <thead><tr><th></th><th>Teacher</th><th>ID</th><th>Classes</th><th>Contact</th><th>Status</th><th></th></tr></thead>
+  <tbody>
+  {% for t in rows %}
+    <tr>
+      <td>{{ avatar('teacher', t.id, t.photo_path, t.full_name, 'avatar-sm') }}</td>
+      <td><a href="{{ url_for('admin_people.teacher_view', teacher_id=t.id) }}"><strong>{{ t.full_name }}</strong></a><br><small>{{ t.username or t.email }}</small></td>
+      <td>{{ t.staff_id }}</td><td>{{ t.class_names or '—' }}</td><td>{{ t.phone or '—' }}<br><small>{{ t.email }}</small></td>
+      <td>{% if t.is_active %}<span class="badge badge-success">Active</span>{% else %}<span class="badge badge-neutral">Inactive</span>{% endif %}{% if t.must_change_password %}<br><span class="badge badge-warning">Awaiting first login</span>{% endif %}</td>
+      <td><div class="actions">
+        <a class="btn btn-outline btn-sm" href="{{ url_for('admin_people.teacher_edit', teacher_id=t.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('admin_people.toggle_teacher_active', teacher_id=t.id) }}" data-confirm="{{ 'Deactivate' if t.is_active else 'Activate' }} {{ t.full_name }}?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm" type="submit">{{ 'Deactivate' if t.is_active else 'Activate' }}</button></form>
+      </div></td>
+    </tr>
+  {% else %}<tr><td colspan="7">No teachers found.</td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% endblock %}

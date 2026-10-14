@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Schools{% endblock %}
+{% block page_title %}Schools{% endblock %}
+{% block content %}
+<div class="section">
+  <h2>Add a school</h2>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="filter-bar">
+      <div class="form-group"><label for="code">Code (login link: ?school=code)</label><input id="code" name="code" required pattern="[A-Za-z0-9-]+"></div>
+      <div class="form-group"><label for="name">School name</label><input id="name" name="name" required></div>
+      <div class="form-group"><label for="admin_name">First administrator name</label><input id="admin_name" name="admin_name" required></div>
+      <div class="form-group"><label for="admin_email">First administrator email</label><input id="admin_email" type="email" name="admin_email" required></div>
+    </div>
+    <button class="btn btn-primary" type="submit">Create school</button>
+  </form>
+</div>
+<div class="section"><div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Code</th><th>Status</th><th>Students</th><th>Teachers</th></tr></thead>
+  <tbody>{% for s in rows %}<tr><td>{{ s.name }}</td><td>{{ s.code }}</td><td>{{ s.status }}</td><td>{{ s.students }}</td><td>{{ s.teachers }}</td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endblock %}

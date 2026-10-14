@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import lifecycle_badge %}
+{% block title %}Academic Sessions{% endblock %}
+{% block page_title %}Academic Sessions{% endblock %}
+{% block content %}
+<div class="section">
+  <h2>Create academic session</h2>
+  <p style="color:var(--color-text-muted);font-size:13px;">A session is a school year. First, Second and Third Term are created automatically with evenly split dates — adjust them below.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="filter-bar">
+      <div class="form-group"><label for="name">Session name</label><input type="text" id="name" name="name" placeholder="2026/2027" required></div>
+      <div class="form-group"><label for="start_date">Start date</label><input type="date" id="start_date" name="start_date" required></div>
+      <div class="form-group"><label for="end_date">End date</label><input type="date" id="end_date" name="end_date" required></div>
+    </div>
+    <button type="submit" class="btn btn-primary">Create session</button>
+  </form>
+</div>
+
+{% for s in sessions %}
+<div class="section card">
+  <div class="actions" style="justify-content:space-between;">
+    <h2 style="margin:0;">{{ s.name }} {{ lifecycle_badge(s.status) }}</h2>
+    <span style="color:var(--color-text-muted);">{{ s.start_date }} → {{ s.end_date }}</span>
+  </div>
+  <div class="actions" style="margin:12px 0;">
+    {% if s.status in ('upcoming','closed') %}
+    <form method="post" action="{{ url_for('school_admin.activate_academic_session', session_id=s.id) }}" data-confirm="Make {{ s.name }} the active session? Any other active session will be closed. Attendance records are kept.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-primary btn-sm" type="submit">Activate session</button></form>
+    {% endif %}
+    {% if s.status in ('active','upcoming') %}
+    <form method="post" action="{{ url_for('school_admin.close_academic_session', session_id=s.id) }}" data-confirm="Close {{ s.name }}? Teachers will no longer be able to record attendance in it. Existing records are kept.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm" type="submit">Close</button></form>
+    {% endif %}
+    {% if s.status == 'closed' %}
+    <form method="post" action="{{ url_for('school_admin.archive_academic_session', session_id=s.id) }}" data-confirm="Archive {{ s.name }}? It becomes read-only. Records are kept.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm" type="submit">Archive</button></form>
+    {% endif %}
+    <a class="btn btn-outline btn-sm" href="{{ url_for('school_admin.academic_session_detail', session_id=s.id) }}">View attendance</a>
+  </div>
+
+  {% if s.status != 'archived' %}
+  <details class="term-edit"><summary>Edit session details</summary>
+    <form method="post" action="{{ url_for('school_admin.edit_academic_session', session_id=s.id) }}" class="filter-bar" style="margin-top:8px;">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group"><label for="n{{ s.id }}">Name</label><input id="n{{ s.id }}" type="text" name="name" value="{{ s.name }}" required></div>
+      <div class="form-group"><label for="sd{{ s.id }}">Start</label><input id="sd{{ s.id }}" type="date" name="start_date" value="{{ s.start_date }}" required></div>
+      <div class="form-group"><label for="ed{{ s.id }}">End</label><input id="ed{{ s.id }}" type="date" name="end_date" value="{{ s.end_date }}" required></div>
+      <div class="form-group"><button class="btn btn-primary btn-sm" type="submit">Save</button></div>
+    </form>
+  </details>
+  {% endif %}
+
+  <div class="table-wrap" style="margin-top:12px;"><table>
+    <thead><tr><th>Term</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for t in terms.get(s.id, []) %}
+      <tr>
+        <td>{{ t.name }}</td><td>{{ t.start_date }}</td><td>{{ t.end_date }}</td><td>{{ lifecycle_badge(t.status) }}</td>
+        <td>
+          <div class="actions">
+          {% if s.status == 'active' and t.status != 'active' %}
+            <form method="post" action="{{ url_for('school_admin.activate_term', term_id=t.id) }}" data-confirm="Activate {{ t.name }}? The current active term will be marked completed. Recorded attendance is not changed.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-primary btn-sm" type="submit">Activate</button></form>
+          {% endif %}
+          {% if t.status == 'active' %}
+            <form method="post" action="{{ url_for('school_admin.complete_term', term_id=t.id) }}" data-confirm="Mark {{ t.name }} completed? Teachers will not be able to record attendance until a term is active.">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm" type="submit">Complete</button></form>
+          {% endif %}
+          {% if s.status in ('upcoming','active') %}
+            <details class="term-edit"><summary>Edit dates</summary>
+              <form method="post" action="{{ url_for('school_admin.edit_term', term_id=t.id) }}" class="filter-bar" style="margin-top:6px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group"><label for="ts{{ t.id }}">Start</label><input id="ts{{ t.id }}" type="date" name="start_date" value="{{ t.start_date }}" required></div>
+                <div class="form-group"><label for="te{{ t.id }}">End</label><input id="te{{ t.id }}" type="date" name="end_date" value="{{ t.end_date }}" required></div>
+                <div class="form-group"><button class="btn btn-primary btn-sm" type="submit">Save</button></div>
+              </form>
+            </details>
+          {% endif %}
+          </div>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody></table></div>
+</div>
+{% else %}
+<div class="section"><p>No academic sessions yet. Create the first one above.</p></div>
+{% endfor %}
+{% endblock %}

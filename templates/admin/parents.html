@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Parents{% endblock %}
+{% block page_title %}Parents{% endblock %}
+{% block content %}
+<div class="section">
+  <h2>Create parent account</h2>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="filter-bar">
+      <div class="form-group"><label for="full_name">Full name</label><input id="full_name" name="full_name" required></div>
+      <div class="form-group"><label for="email">Email (login)</label><input id="email" type="email" name="email" required></div>
+    </div>
+    <button class="btn btn-primary" type="submit">Create parent</button>
+  </form>
+</div>
+<div class="section">
+  <form method="get" class="filter-bar"><div class="form-group"><label for="q">Search</label><input id="q" name="q" value="{{ q }}"></div><div class="form-group"><button class="btn btn-outline">Search</button></div></form>
+  {% for p in parents %}
+  <div class="card" style="margin-bottom:12px;">
+    <strong>{{ p.full_name }}</strong> · {{ p.email }} {% if not p.is_active %}<span class="badge badge-neutral">Inactive</span>{% endif %}
+    <ul>
+      {% for c in children.get(p.id, []) %}
+      <li>{{ c.first_name }} {{ c.surname }} ({{ c.admission_number }}, {{ c.class_name or 'no class' }})
+        <form method="post" action="{{ url_for('admin_people.unlink_child', parent_id=p.id, student_id=c.id) }}" class="inline-form" data-confirm="Unlink this child from the parent account?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm" type="submit">Unlink</button></form></li>
+      {% else %}<li>No children linked yet.</li>{% endfor %}
+    </ul>
+    <form method="post" action="{{ url_for('admin_people.link_child', parent_id=p.id) }}" class="filter-bar">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group"><label for="st{{ p.id }}">Link a child</label>
+        <select id="st{{ p.id }}" name="student_id" required><option value="">Choose student…</option>
+          {% for s in students %}<option value="{{ s.id }}">{{ s.surname }}, {{ s.first_name }} ({{ s.admission_number }})</option>{% endfor %}</select></div>
+      <div class="form-group"><label for="rel{{ p.id }}">Relationship</label><input id="rel{{ p.id }}" name="relationship" placeholder="Mother, Father…"></div>
+      <div class="form-group"><button class="btn btn-primary btn-sm" type="submit">Link</button></div>
+    </form>
+  </div>
+  {% else %}<p>No parent accounts yet.</p>{% endfor %}
+</div>
+{% endblock %}

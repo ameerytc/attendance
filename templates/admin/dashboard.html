@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import pct_badge, status_badge, context_picker %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block content %}
+
+{% if not ctx.session %}
+<div class="notice notice-warning">No academic session exists yet. <a href="{{ url_for('school_admin.academic_sessions') }}">Create one</a> to start recording attendance by term.</div>
+{% elif not ctx.active_term %}
+<div class="notice notice-warning">No term is active. Teachers cannot record attendance until you activate a term under <a href="{{ url_for('school_admin.academic_sessions') }}">Academic Sessions</a>.</div>
+{% endif %}
+
+<div class="section">
+  {{ context_picker(ctx) }}
+  {% if ctx.terms %}
+  <div class="actions" role="group" aria-label="Switch term">
+    {% for t in ctx.terms %}
+      <a class="btn btn-sm {{ 'btn-primary' if ctx.term and ctx.term.id == t.id else 'btn-outline' }}" href="{{ url_for('school_admin.dashboard', session_id=ctx.session.id, term_id=t.id) }}">{{ t.name }}</a>
+    {% endfor %}
+    <a class="btn btn-sm {{ 'btn-primary' if not ctx.term else 'btn-outline' }}" href="{{ url_for('school_admin.dashboard', session_id=ctx.session.id, term_id='all') }}">Whole session</a>
+  </div>
+  {% endif %}
+  <p style="color:var(--color-text-muted);font-size:13px;">Showing {{ ctx.session.name if ctx.session else '—' }} · {{ ctx.term.name if ctx.term else 'all terms' }}. Today is {{ today }} (school time).</p>
+</div>
+
+<div class="section">
+  <h2>Overview</h2>
+  <div class="stat-grid">
+    <div class="card stat-card"><div class="stat-label">Total students</div><div class="stat-value">{{ counts.students }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Total teachers</div><div class="stat-value">{{ counts.teachers }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Total classes</div><div class="stat-value">{{ counts.classes }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Present today</div><div class="stat-value">{{ today_stats.present }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Absent today</div><div class="stat-value">{{ today_stats.absent }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Today's attendance</div><div class="stat-value">{{ (today_stats.pct ~ '%') if today_stats.pct is not none else '—' }}</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>{{ ctx.term.name if ctx.term else 'Whole session' }} summary</h2>
+  <div class="stat-grid">
+    <div class="card stat-card"><div class="stat-label">Present</div><div class="stat-value">{{ term_totals.present }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Late</div><div class="stat-value">{{ term_totals.late }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Absent</div><div class="stat-value">{{ term_totals.absent }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Excused</div><div class="stat-value">{{ term_totals.excused }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Attendance %</div><div class="stat-value">{{ (term_totals.pct ~ '%') if term_totals.pct is not none else '—' }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Open sessions now</div><div class="stat-value">{{ active_sessions }}</div></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Attendance analytics (last {{ series|length }} recorded days)</h2>
+  {% if series %}
+  <div class="chart" role="img" aria-label="Stacked bars of present, late and absent entries per recorded day">
+    {% for d in series %}
+    <div class="chart-col" title="{{ d.day }}: {{ d.present }} present, {{ d.late }} late, {{ d.absent }} absent">
+      <div class="chart-stack" style="height:{{ (d.total * 100 / max_total)|round|int }}%;">
+        <div class="seg-present" style="flex:{{ d.present }}"></div><div class="seg-late" style="flex:{{ d.late }}"></div><div class="seg-absent" style="flex:{{ d.absent + d.excused }}"></div>
+      </div>
+      <div class="chart-label">{{ d.day[5:] }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="legend"><span><i style="background:var(--color-success)"></i>Present</span><span><i style="background:#d9a406"></i>Late</span><span><i style="background:var(--color-error)"></i>Absent / excused</span></div>
+  {% else %}<p>No attendance has been recorded for this selection yet.</p>{% endif %}
+</div>
+
+<div class="section">
+  <h2>Recent attendance activity</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Student</th><th>Class</th><th>Subject</th><th>Term</th><th>Status</th><th>Recorded by</th></tr></thead>
+    <tbody>
+    {% for r in recent %}
+      <tr><td>{{ r.session_date }}</td><td>{{ r.first_name }} {{ r.surname }}</td><td>{{ r.class_name }}</td><td>{{ r.subject_name }}</td><td>{{ r.term_name }}</td><td>{{ status_badge(r.status) }}</td><td>{{ r.recorded_by or r.verification_method }}</td></tr>
+    {% else %}<tr><td colspan="7">No activity yet.</td></tr>{% endfor %}
+    </tbody></table></div>
+</div>
+
+<div class="section">
+  <h2>Low attendance (below {{ settings.attendance_threshold_pct }}%)</h2>
+  {% if low_attendance %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Admission No.</th><th>Name</th><th>Class</th><th>Attendance %</th></tr></thead>
+    <tbody>{% for s in low_attendance %}<tr><td>{{ s.admission_number }}</td><td><a href="{{ url_for('reports.student_report', student_id=s.student_id, session_id=ctx.session.id if ctx.session else '', term_id=ctx.term.id if ctx.term else 'all') }}">{{ s.name }}</a></td><td>{{ s.class_name }}</td><td>{{ pct_badge(s.pct) }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p>No students are below the threshold for this selection.</p>{% endif %}
+  <a href="{{ url_for('reports.low_attendance_report', session_id=ctx.session.id if ctx.session else '', term_id=ctx.term.id if ctx.term else 'all') }}" class="btn btn-outline">View full report</a>
+</div>
+{% endblock %}

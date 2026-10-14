@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Teacher registration{% endblock %}
+{% block page_title %}Registration summary{% endblock %}
+{% block content %}
+<div class="section">
+  {% if created and not failed %}<div class="notice"><strong>Teacher registration completed successfully.</strong></div>
+  {% elif created %}<div class="notice notice-warning"><strong>Registration finished with some problems.</strong> The accounts below were created; the others need correction.</div>
+  {% else %}<div class="notice notice-error"><strong>No accounts were created.</strong> Download the error report, correct it and try again.</div>{% endif %}
+  <div class="stat-grid">
+    <div class="card stat-card"><div class="stat-label">Teachers submitted</div><div class="stat-value">{{ p.submitted }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Accounts created</div><div class="stat-value">{{ created|length }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Failed records</div><div class="stat-value">{{ failed|length }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Duplicates</div><div class="stat-value">{{ duplicates }}</div></div>
+    <div class="card stat-card"><div class="stat-label">Need corrections</div><div class="stat-value">{{ corrections }}</div></div>
+  </div>
+</div>
+
+{% if created %}
+<div class="section">
+  <h2>Login details</h2>
+  {% if p.secrets_cleared %}
+    <div class="notice">Temporary passwords were removed from the server. Use <em>Reset password</em> on a teacher's profile to issue new ones.</div>
+  {% else %}
+    <div class="notice notice-warning"><strong>Sensitive information.</strong> The credentials file contains temporary passwords. Store it securely, share each login privately, and delete it afterwards. It is only available for a few minutes and cannot be downloaded again later. Teachers must choose their own password at first login.</div>
+  {% endif %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Teacher ID</th><th>Name</th><th>Login</th><th>Classes</th><th>Status</th><th>Notes</th></tr></thead>
+    <tbody>{% for r in created %}<tr><td>{{ r.staff_id }}</td><td>{{ r.first_name }} {{ r.middle_name }} {{ r.surname }}</td><td>{{ r.username }}<br><small>{{ r.email }}</small></td><td>{{ r.assigned_classes or '—' }}</td><td>{{ r.status }}</td><td><small>{{ r.notes }}</small></td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endif %}
+
+{% if failed %}
+<div class="section">
+  <h2>Records that need attention</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Row</th><th>Name</th><th>Type</th><th>Problem</th></tr></thead>
+    <tbody>{% for f in failed %}<tr><td>{{ f.row_no }}</td><td>{{ f.data.first_name }} {{ f.data.surname }}</td><td>{{ 'Duplicate' if f.kind == 'duplicate' else 'Correction needed' }}</td><td>{{ f.errors|join('; ') }}</td></tr>{% endfor %}</tbody></table></div>
+  <a class="btn btn-outline" href="{{ url_for('admin_people.teacher_error_report', token=token) }}">Download error report (CSV)</a>
+  <small style="display:block;margin-top:6px;">Fix the rows in the report and upload it again — accounts already created are never duplicated.</small>
+</div>
+{% endif %}
+
+<div class="section">
+  <div class="actions">
+    {% if created and not p.secrets_cleared %}<a class="btn btn-primary" href="{{ url_for('admin_people.teacher_credentials_csv', token=token) }}">Download Teacher Credentials (CSV)</a>{% endif %}
+    <a class="btn btn-outline" href="{{ url_for('admin_people.teachers_export_csv') }}">Download Teacher List (CSV)</a>
+    <a class="btn btn-outline" href="{{ url_for('admin_people.teachers_list') }}">View All Teachers</a>
+    <a class="btn btn-outline" href="{{ url_for('school_admin.dashboard') }}">Continue to Dashboard</a>
+  </div>
+  {% if created and not p.secrets_cleared %}
+  <form method="post" action="{{ url_for('admin_people.teacher_forget_passwords', token=token) }}" data-confirm="Remove the temporary passwords from the server now? You will not be able to download them afterwards." style="margin-top:12px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="btn btn-outline btn-sm" type="submit">I've saved the file — remove passwords from the server</button></form>
+  {% endif %}
+  <p style="color:var(--color-text-muted);font-size:13px;margin-top:10px;">You can leave this page at any time; created accounts are already saved.</p>
+</div>
+{% endblock %}

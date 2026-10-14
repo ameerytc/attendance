@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit teacher' if teacher else 'Add teacher' }}{% endblock %}
+{% block page_title %}{{ 'Edit teacher' if teacher else 'Add teacher' }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="section" style="max-width:820px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h2>Passport photograph</h2>
+  <div class="sheet-photo" style="margin-bottom:14px;">
+    {% if teacher and teacher.photo_path %}<img id="photo-prev" class="avatar avatar-lg" src="{{ url_for('media.teacher_photo', teacher_id=teacher.id) }}" alt="Current photo">
+    {% else %}<img id="photo-prev" class="avatar avatar-lg" alt="Photo preview" hidden><span id="photo-prev-ph" class="avatar avatar-lg" aria-hidden="true">📷</span>{% endif %}
+    <div class="form-group" style="flex:1;">
+      <label for="photo">Upload photo (PNG, JPG or WebP, max 2 MB) — from your phone camera or computer</label>
+      <input type="file" id="photo" name="photo" accept="image/png,image/jpeg,image/webp" capture="user" data-preview="photo-prev" {% if not storage.configured %}disabled{% endif %}>
+      <small data-preview-msg>{% if not storage.configured %}{{ storage.message }}{% endif %}</small>
+    </div>
+  </div>
+
+  <h2>Personal details</h2>
+  <div class="filter-bar">
+    <div class="form-group"><label for="first_name">First name *</label><input type="text" id="first_name" name="first_name" value="{{ form.first_name or '' }}" required maxlength="80"></div>
+    <div class="form-group"><label for="middle_name">Middle name</label><input type="text" id="middle_name" name="middle_name" value="{{ form.middle_name or '' }}" maxlength="80"></div>
+    <div class="form-group"><label for="surname">Surname *</label><input type="text" id="surname" name="surname" value="{{ form.surname or '' }}" required maxlength="80"></div>
+    <div class="form-group"><label for="gender">Gender</label><select id="gender" name="gender"><option value="">—</option><option value="male" {% if form.gender == 'male' %}selected{% endif %}>Male</option><option value="female" {% if form.gender == 'female' %}selected{% endif %}>Female</option></select></div>
+    <div class="form-group"><label for="phone">Phone number</label><input type="tel" id="phone" name="phone" value="{{ form.phone or '' }}" maxlength="40"></div>
+    <div class="form-group"><label for="address">Address</label><input type="text" id="address" name="address" value="{{ form.address or '' }}" maxlength="300"></div>
+  </div>
+
+  <h2>Account</h2>
+  <div class="filter-bar">
+    <div class="form-group"><label for="staff_id">Teacher ID / staff number</label><input type="text" id="staff_id" name="staff_id" value="{{ form.staff_id or '' }}" {% if teacher %}readonly{% else %}placeholder="Leave blank to auto-generate"{% endif %}></div>
+    <div class="form-group"><label for="email">Login email{{ '' if teacher else ' (optional)' }}</label><input type="email" id="email" name="email" value="{{ form.email or '' }}" {% if teacher %}required{% else %}placeholder="Blank = generated username login"{% endif %}></div>
+    <div class="form-group"><label for="account_status">Account status</label><select id="account_status" name="account_status"><option value="active" {% if form.account_status != 'inactive' %}selected{% endif %}>Active</option><option value="inactive" {% if form.account_status == 'inactive' %}selected{% endif %}>Inactive</option></select></div>
+    {% if not teacher %}<div class="form-group"><label for="temp_password">Temporary password (optional)</label><input type="text" id="temp_password" name="temp_password" autocomplete="off" placeholder="Blank = secure random password" minlength="10"></div>{% endif %}
+  </div>
+  {% if not teacher %}<p style="color:var(--color-text-muted);font-size:13px;">The teacher must choose their own password at first login. Only the password hash is stored.</p>
+
+  <h2>Assigned class(es)</h2>
+  {% if classes %}
+  <div class="chip-row" style="margin:0 0 10px;">
+    {% for c in classes %}<label style="display:inline-flex;gap:6px;align-items:center;"><input type="checkbox" name="class_names" value="{{ c.name }}" {% if c.class_teacher_id %}title="Already has a class teacher"{% endif %}> {{ c.name }}{% if c.class_teacher_id %} <small>(has class teacher)</small>{% endif %}</label>{% endfor %}
+  </div>
+  <div class="form-group" style="max-width:360px;"><label for="subject_code">Also assign a subject to these classes (optional)</label>
+    <select id="subject_code" name="subject_code"><option value="">— none —</option>{% for s in subjects %}<option value="{{ s.code }}">{{ s.code }} — {{ s.name }}</option>{% endfor %}</select>
+    <small>A subject assignment is what lets the teacher take attendance in the active term.</small></div>
+  {% else %}<p>No classes in the active session yet.</p>{% endif %}
+  {% endif %}
+
+  <div class="actions" style="margin-top:16px;">
+    <button type="submit" class="btn btn-primary">{{ 'Save changes' if teacher else 'Create teacher account' }}</button>
+    <a class="btn btn-outline" href="{{ url_for('admin_people.teachers_list') if not teacher else url_for('admin_people.teacher_view', teacher_id=teacher.id) }}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

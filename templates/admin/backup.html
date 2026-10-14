@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Backup{% endblock %}
+{% block page_title %}Database Backup{% endblock %}
+{% block content %}
+<div class="section">
+  <p style="color:var(--color-text-muted);">Manual backups are copied on this server. For production, configure
+  off-server/scheduled backup as documented in the README.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-primary">Create Backup Now</button>
+  </form>
+</div>
+<div class="section">
+  <h2>Backup History</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>File</th><th></th></tr></thead>
+      <tbody>
+        {% for f in files %}
+        <tr>
+          <td>{{ f }}</td>
+          <td><a href="{{ url_for('admin_ops.backup_download', filename=f) }}" class="btn btn-outline" style="padding:6px 12px;">Download</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="2">No backups yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

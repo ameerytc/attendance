@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Bulk add teachers{% endblock %}
+{% block page_title %}Bulk add teachers{% endblock %}
+{% block content %}
+{% if preview %}
+<div class="section">
+  <h2>Review before importing</h2>
+  <p><strong>{{ preview.ok }}</strong> row(s) are ready · <strong>{{ preview.bad }}</strong> need attention. Nothing has been created yet.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Row</th><th>Name</th><th>Email</th><th>Staff no.</th><th>Classes</th><th>Result</th></tr></thead>
+    <tbody>{% for v in preview.validated %}<tr>
+      <td>{{ v.row_no }}</td><td>{{ v.data.first_name }} {{ v.data.surname }}</td><td>{{ v.data.email or '(auto)' }}</td><td>{{ v.data.staff_id or '(auto)' }}</td><td>{{ v.data.assigned_classes }}</td>
+      <td>{% if not v.errors %}<span class="badge badge-success">Ready</span>{% else %}<span class="badge {{ 'badge-warning' if v.kind == 'duplicate' else 'badge-error' }}">{{ 'Duplicate' if v.kind == 'duplicate' else 'Fix needed' }}</span> <small>{{ v.errors|join('; ') }}</small>{% endif %}</td></tr>{% endfor %}</tbody></table></div>
+  <div class="actions" style="margin-top:12px;">
+    {% if preview.ok %}
+    <form method="post" data-confirm="Create {{ preview.ok }} teacher account(s)? Rows with problems will be skipped.">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="confirm"><input type="hidden" name="token" value="{{ preview.token }}">
+      <button class="btn btn-primary" type="submit">Import {{ preview.ok }} valid teacher{{ '' if preview.ok == 1 else 's' }}</button></form>
+    {% endif %}
+    {% if preview.bad %}<a class="btn btn-outline" href="{{ url_for('admin_people.teacher_error_report', token=preview.token) }}">Download error report (CSV)</a>{% endif %}
+    <a class="btn btn-outline" href="{{ url_for('admin_people.teachers_bulk') }}">Start over</a>
+  </div>
+</div>
+{% else %}
+<div class="section" data-tabs>
+  <div class="segmented" role="tablist"><a href="#" class="on" data-tab="form">Add several by form</a><a href="#" data-tab="csv">Upload CSV file</a></div>
+</div>
+
+<div class="section" data-tab-panel="form">
+  <h2>Method A — type the teachers in</h2>
+  <p style="color:var(--color-text-muted);font-size:13px;">Only first name and surname are required. Teacher ID, login and a secure temporary password are generated automatically.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="form">
+    <div class="table-wrap"><table>
+      <thead><tr><th>First name *</th><th>Middle</th><th>Surname *</th><th>Gender</th><th>Phone</th><th>Email</th><th>Staff no.</th><th>Class(es) e.g. JSS 1A;JSS 1B</th><th></th></tr></thead>
+      <tbody id="teacher-rows">
+      {% for i in range(3) %}<tr>
+        <td><input name="first_name" aria-label="First name"></td><td><input name="middle_name" aria-label="Middle name"></td><td><input name="surname" aria-label="Surname"></td>
+        <td><select name="gender" aria-label="Gender"><option value="">—</option><option value="male">Male</option><option value="female">Female</option></select></td>
+        <td><input name="phone" type="tel" aria-label="Phone"></td><td><input name="email" type="email" aria-label="Email"></td><td><input name="staff_id" aria-label="Staff number"></td>
+        <td><input name="assigned_classes" aria-label="Classes"></td><td><button type="button" class="btn btn-outline btn-sm" data-remove-row aria-label="Remove row">✕</button></td></tr>{% endfor %}
+      </tbody></table></div>
+    <div class="actions" style="margin-top:10px;">
+      <button type="button" class="btn btn-outline btn-sm" id="add-teacher-row">+ Add row</button>
+      <button type="submit" class="btn btn-primary">Create accounts</button>
+    </div>
+  </form>
+</div>
+
+<div class="section" data-tab-panel="csv" hidden>
+  <h2>Method B — upload a CSV</h2>
+  <p>Columns: <code>first_name, middle_name, surname, gender, phone, email, staff_id, address, assigned_classes, subject_code, account_status</code>. Required: first_name, surname. Separate several classes with <code>;</code>.</p>
+  <p><a href="{{ url_for('admin_people.teachers_import_template') }}">Download the CSV template</a></p>
+  <form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="csv">
+    <div class="form-group"><label for="csv_file">CSV file</label><input type="file" id="csv_file" name="csv_file" accept=".csv,text/csv" required></div>
+    <button class="btn btn-primary" type="submit">Validate file</button>
+    <small style="display:block;margin-top:6px;">You will see every problem before anything is created.</small>
+  </form>
+</div>
+{% endif %}
+{% endblock %}
