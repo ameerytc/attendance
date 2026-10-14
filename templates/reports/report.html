@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import pct_badge %}
+{% block title %}{{ report.title }}{% endblock %}
+{% block page_title %}{{ report.title }}{% endblock %}
+{% block head %}<style>@media print { .sidebar, .topbar, .drawer-toggle, .no-print { display:none !important; } .main-area { margin:0 !important; } body { background:#fff; } }</style>{% endblock %}
+{% block content %}
+<div class="section no-print">
+  <form method="get" class="filter-bar">
+    {% if not show.no_session %}
+    <div class="form-group"><label for="f-session">Academic session</label>
+      <select id="f-session" name="session_id">{% for s in ctx.sessions %}<option value="{{ s.id }}" {% if ctx.session and ctx.session.id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></div>
+    {% if not show.no_term %}
+    <div class="form-group"><label for="f-term">Term</label>
+      <select id="f-term" name="term_id"><option value="all" {% if not ctx.term %}selected{% endif %}>All terms</option>
+        {% for t in ctx.terms %}<option value="{{ t.id }}" {% if ctx.term and ctx.term.id == t.id %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+    {% endif %}{% endif %}
+    {% if show.class %}
+    <div class="form-group"><label for="f-class">Class</label>
+      <select id="f-class" name="class_id"><option value="">All classes</option>{% for c in classes %}<option value="{{ c.id }}" {% if args.get('class_id') == c.id|string %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+    {% endif %}
+    {% if show.date %}<div class="form-group"><label for="f-date">Date</label><input id="f-date" type="date" name="date" value="{{ args.get('date') or report.meta[0][1] }}"></div>{% endif %}
+    {% if show.range %}
+    <div class="form-group"><label for="f-from">From</label><input id="f-from" type="date" name="date_from" value="{{ args.get('date_from','') }}"></div>
+    <div class="form-group"><label for="f-to">To</label><input id="f-to" type="date" name="date_to" value="{{ args.get('date_to','') }}"></div>
+    {% endif %}
+    {% if show.status %}
+    <div class="form-group"><label for="f-status">Status</label>
+      <select id="f-status" name="status"><option value="">Any</option>{% for st in ['present','late','absent','excused'] %}<option value="{{ st }}" {% if args.get('status') == st %}selected{% endif %}>{{ st|capitalize }}</option>{% endfor %}</select></div>
+    {% endif %}
+    <div class="form-group"><button class="btn btn-outline" type="submit">Apply filters</button></div>
+  </form>
+  <div class="actions">
+    <a class="btn btn-primary btn-sm" href="{{ pdf_url }}">Download PDF</a>
+    <a class="btn btn-outline btn-sm" href="{{ csv_url }}">Export CSV</a>
+    <button class="btn btn-outline btn-sm" type="button" onclick="window.print()">Print</button>
+  </div>
+</div>
+
+<div class="section report-header">
+  <div class="school-brand" style="display:flex;gap:12px;align-items:center;">{% include "partials/brand_header.html" %}</div>
+  <h2 style="margin:14px 0 8px;">{{ report.title }}</h2>
+  <div class="meta-list">{% for k, v in report.meta %}<div><b>{{ k }}:</b> {{ v }}</div>{% endfor %}</div>
+  <div class="stat-grid">{% for k, v in report.summary %}<div class="card stat-card"><div class="stat-label">{{ k }}</div><div class="stat-value" style="font-size:20px;">{{ v }}</div></div>{% endfor %}</div>
+</div>
+
+<div class="section"><div class="table-wrap"><table>
+  <thead><tr>{% for c in report.columns %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for row in report.rows %}<tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+  {% else %}<tr><td colspan="{{ report.columns|length }}">No attendance recorded for this selection.</td></tr>{% endfor %}
+  </tbody></table></div></div>
+{% endblock %}

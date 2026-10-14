@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_badge, context_picker %}
+{% block title %}Attendance Records{% endblock %}
+{% block page_title %}Attendance Records{% endblock %}
+{% block content %}
+<div class="section">
+  <form method="get" class="filter-bar">
+    <div class="form-group"><label for="f-session">Academic session</label>
+      <select id="f-session" name="session_id">{% for s in ctx.sessions %}<option value="{{ s.id }}" {% if ctx.session and ctx.session.id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="f-term">Term</label>
+      <select id="f-term" name="term_id"><option value="all" {% if not ctx.term %}selected{% endif %}>All terms</option>{% for t in ctx.terms %}<option value="{{ t.id }}" {% if ctx.term and ctx.term.id == t.id %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="f-class">Class</label>
+      <select id="f-class" name="class_id"><option value="">All</option>{% for c in classes %}<option value="{{ c.id }}" {% if args.get('class_id') == c.id|string %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="f-from">From</label><input id="f-from" type="date" name="date_from" value="{{ args.get('date_from','') }}"></div>
+    <div class="form-group"><label for="f-to">To</label><input id="f-to" type="date" name="date_to" value="{{ args.get('date_to','') }}"></div>
+    <div class="form-group"><label for="f-status">Status</label>
+      <select id="f-status" name="status"><option value="">Any</option>{% for st in ['present','late','absent','excused'] %}<option value="{{ st }}" {% if args.get('status') == st %}selected{% endif %}>{{ st|capitalize }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="f-q">Student</label><input id="f-q" name="q" value="{{ args.get('q','') }}" placeholder="Name or admission no."></div>
+    <div class="form-group"><button class="btn btn-outline" type="submit">Search</button></div>
+  </form>
+  <a class="btn btn-primary btn-sm" href="{{ url_for('reports.records_search', format='csv', **export_query) }}">Export CSV</a>
+</div>
+<div class="section"><div class="table-wrap"><table>
+  <thead><tr><th>Date</th><th>Admission No.</th><th>Student</th><th>Class</th><th>Subject</th><th>Term</th><th>Status</th><th>Method</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td>{{ r.session_date }}</td><td>{{ r.admission_number }}</td>
+    <td><a href="{{ url_for('reports.student_report', student_id=r.student_id, session_id=ctx.session.id if ctx.session else '', term_id=ctx.term.id if ctx.term else 'all') }}">{{ r.first_name }} {{ r.surname }}</a></td>
+    <td>{{ r.class_name }}</td><td>{{ r.subject_name }}</td><td>{{ r.term_name }}</td><td>{{ status_badge(r.status) }}</td><td>{{ r.verification_method }}</td></tr>
+  {% else %}<tr><td colspan="8">No records match.</td></tr>{% endfor %}</tbody></table></div>
+  {% if rows|length >= 500 %}<p style="color:var(--color-text-muted);font-size:13px;">Showing the latest 500. Export CSV for everything that matches.</p>{% endif %}</div>
+{% endblock %}

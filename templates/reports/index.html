@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block content %}
+<div class="section">
+  <h2>Generate a report</h2>
+  <p style="color:var(--color-text-muted);font-size:13px;">Every report shows the school, logo, session, term, class and date, and can be downloaded as PDF or CSV. Term reports contain that term's records only.</p>
+  <form method="get" id="report-form" class="filter-bar">
+    <div class="form-group"><label for="rtype">Report type</label>
+      <select id="rtype">
+        <option value="{{ url_for('reports.class_report', class_id=0) }}" data-needs-class="1">Class attendance report</option>
+        <option value="{{ url_for('reports.daily_report') }}" data-date="1">Daily attendance report</option>
+        <option value="{{ url_for('reports.term_report') }}">Term attendance report</option>
+        <option value="{{ url_for('reports.session_report') }}">Full academic-session report</option>
+      </select></div>
+    <div class="form-group"><label for="session_id">Academic session</label>
+      <select id="session_id" name="session_id">{% for s in ctx.sessions %}<option value="{{ s.id }}" {% if ctx.session and ctx.session.id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="term_id">Term</label>
+      <select id="term_id" name="term_id"><option value="all">All terms</option>
+        {% for t in ctx.terms %}<option value="{{ t.id }}" {% if ctx.term and ctx.term.id == t.id %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="class_id">Class</label>
+      <select id="class_id" name="class_id"><option value="">All classes</option>{% for c in classes %}<option value="{{ c.id }}">{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="date">Date (daily report)</label><input id="date" type="date" name="date" value="{{ today }}"></div>
+    <div class="form-group"><button class="btn btn-primary" type="submit">Open report</button></div>
+  </form>
+</div>
+<script>
+  const form = document.getElementById("report-form");
+  const type = document.getElementById("rtype");
+  const cls = document.getElementById("class_id");
+  function sync() {
+    const opt = type.options[type.selectedIndex];
+    form.action = opt.value;
+    if (opt.dataset.needsClass) {
+      // class report URL carries the class id in the path
+      form.onsubmit = (e) => {
+        if (!cls.value) { e.preventDefault(); alert("Choose a class for the class report."); return; }
+        form.action = "{{ url_for('reports.class_report', class_id=0) }}".replace(/0$/, cls.value);
+      };
+    } else { form.onsubmit = null; }
+  }
+  type.addEventListener("change", sync); sync();
+</script>
+<div class="section">
+  <h2>Other views</h2>
+  <div class="actions">
+    {% if is_admin %}
+    <a class="btn btn-outline" href="{{ url_for('reports.records_search') }}">Attendance records &amp; CSV export</a>
+    <a class="btn btn-outline" href="{{ url_for('reports.sessions_list') }}">Attendance sessions</a>
+    <a class="btn btn-outline" href="{{ url_for('reports.low_attendance_report') }}">Low attendance</a>
+    {% endif %}
+    <a class="btn btn-outline" href="{{ url_for('admin_people.students_list') if is_admin else url_for('teacher.my_classes') }}">Find a student for an individual report</a>
+  </div>
+</div>
+{% endblock %}
