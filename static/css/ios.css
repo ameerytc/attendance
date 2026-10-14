@@ -1,0 +1,133 @@
+/* ============================================================
+   iOS-style mobile shell for TEACHER and PARENT screens.
+   Scoped to body.ios so the admin layout is untouched.
+   Large titles, translucent bars, inset-grouped cards, pill buttons,
+   spring animations, bottom tab bar, safe-area aware, dark-mode aware,
+   and fully disabled under prefers-reduced-motion.
+   ============================================================ */
+:root {
+  --ios-blue: #007aff; --ios-green: #34c759; --ios-orange: #ff9500; --ios-red: #ff3b30; --ios-indigo: #5856d6;
+  --ios-bg: #f2f2f7; --ios-card: #ffffff; --ios-fill: #f2f2f7; --ios-label: #111114; --ios-secondary: #6e6e73;
+  --ios-sep: rgba(60,60,67,.16); --ios-glass: rgba(249,249,251,.78);
+  --ios-spring: cubic-bezier(.2,.9,.3,1.15); --ios-ease: cubic-bezier(.25,.8,.25,1);
+  --ios-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --ios-bg:#000; --ios-card:#1c1c1e; --ios-fill:#2c2c2e; --ios-label:#f5f5f7; --ios-secondary:#98989f; --ios-sep:rgba(84,84,88,.55); --ios-glass:rgba(28,28,30,.78); }
+}
+
+body.ios { background:var(--ios-bg); color:var(--ios-label); font-family:var(--ios-font); -webkit-font-smoothing:antialiased; -webkit-tap-highlight-color:transparent; overscroll-behavior-y:none; }
+body.ios .app-shell { display:block; min-height:100dvh; background:transparent; }
+body.ios .main-area { margin:0; padding:0; max-width:760px; margin-inline:auto; }
+body.ios .content { padding:0 0 calc(92px + env(safe-area-inset-bottom)); }
+body.ios a { color:var(--ios-blue); text-decoration:none; }
+body.ios h1, body.ios h2, body.ios h3 { font-family:var(--ios-font); letter-spacing:-.02em; color:var(--ios-label); }
+
+/* ---- navigation bar with large title ---- */
+.ios-nav { position:sticky; top:0; z-index:40; padding-top:env(safe-area-inset-top); background:transparent; transition:background .25s var(--ios-ease), box-shadow .25s; max-width:760px; margin-inline:auto; }
+.ios-nav.scrolled { background:var(--ios-glass); -webkit-backdrop-filter:saturate(180%) blur(20px); backdrop-filter:saturate(180%) blur(20px); box-shadow:0 .5px 0 var(--ios-sep); }
+.ios-nav-bar { display:flex; align-items:center; justify-content:space-between; height:44px; padding:0 16px; }
+.ios-nav-small { font-weight:600; font-size:17px; opacity:0; transform:translateY(6px); transition:opacity .2s, transform .25s var(--ios-ease); }
+.ios-nav.scrolled .ios-nav-small { opacity:1; transform:none; }
+.ios-nav-actions { display:flex; gap:6px; align-items:center; margin-left:auto; }
+.ios-icon-btn { position:relative; display:grid; place-items:center; width:36px; height:36px; border-radius:50%; background:var(--ios-card); color:var(--ios-blue); transition:transform .2s var(--ios-spring); box-shadow:0 1px 2px rgba(0,0,0,.08); }
+.ios-icon-btn:active { transform:scale(.88); }
+.ios-icon-btn svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.ios-large-title { margin:0; padding:2px 20px 10px; font-size:34px; line-height:1.1; font-weight:700; letter-spacing:-.03em; transition:opacity .2s, transform .25s var(--ios-ease), max-height .25s; max-height:60px; overflow:hidden; }
+.ios-nav.scrolled .ios-large-title { opacity:0; transform:translateY(-8px); max-height:0; padding-bottom:0; }
+
+/* ---- bottom tab bar ---- */
+.ios-tabbar { position:fixed; left:0; right:0; bottom:0; z-index:50; display:flex; justify-content:center; padding-bottom:env(safe-area-inset-bottom); background:var(--ios-glass); -webkit-backdrop-filter:saturate(180%) blur(22px); backdrop-filter:saturate(180%) blur(22px); box-shadow:0 -.5px 0 var(--ios-sep); }
+.ios-tabbar-inner { display:flex; width:100%; max-width:560px; padding:6px 6px 4px; }
+.ios-tab { position:relative; flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:4px 2px; color:var(--ios-secondary) !important; font-size:10.5px; font-weight:500; border-radius:12px; transition:color .2s, transform .25s var(--ios-spring); }
+.ios-tab svg { width:25px; height:25px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; transition:transform .35s var(--ios-spring); }
+.ios-tab:active { transform:scale(.9); }
+.ios-tab.active { color:var(--ios-blue) !important; }
+.ios-tab.active svg { transform:translateY(-1px) scale(1.08); fill:rgba(0,122,255,.14); }
+
+/* ---- motion: page enter, staggered rise ---- */
+@keyframes ios-rise { from { opacity:0; transform:translateY(16px) scale(.985); } to { opacity:1; transform:none; } }
+@keyframes ios-fade { from { opacity:0; } to { opacity:1; } }
+@keyframes ios-banner { from { opacity:0; transform:translateY(-120%) scale(.96); } to { opacity:1; transform:none; } }
+@keyframes ios-ring { from { stroke-dashoffset:var(--c); } to { stroke-dashoffset:var(--o); } }
+@keyframes ios-pop { 0% { transform:scale(.6); opacity:0; } 70% { transform:scale(1.06); } 100% { transform:scale(1); opacity:1; } }
+body.ios .content > *, .ios-enter { animation:ios-rise .5s var(--ios-spring) both; }
+body.ios .content > *:nth-child(2) { animation-delay:.05s; } body.ios .content > *:nth-child(3) { animation-delay:.1s; }
+body.ios .content > *:nth-child(4) { animation-delay:.15s; } body.ios .content > *:nth-child(5) { animation-delay:.2s; }
+body.ios .content > *:nth-child(n+6) { animation-delay:.25s; }
+.ios-list > * { animation:ios-rise .45s var(--ios-spring) both; }
+.ios-list > *:nth-child(2){animation-delay:.04s} .ios-list > *:nth-child(3){animation-delay:.08s} .ios-list > *:nth-child(4){animation-delay:.12s}
+.ios-list > *:nth-child(5){animation-delay:.16s} .ios-list > *:nth-child(n+6){animation-delay:.2s}
+
+/* ---- inset grouped cards ---- */
+body.ios .section, body.ios .card { background:var(--ios-card); border:0; border-radius:18px; box-shadow:0 1px 2px rgba(0,0,0,.04), 0 6px 20px rgba(0,0,0,.04); margin:14px 16px; padding:16px; }
+body.ios .section > h2, body.ios .card > h2 { margin:0 0 10px; font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--ios-secondary); }
+body.ios .section > h3, body.ios .card > h3 { margin:0 0 8px; font-size:17px; }
+body.ios .notice { margin:12px 16px; border:0; border-radius:14px; background:rgba(0,122,255,.1); color:var(--ios-label); }
+body.ios .notice-warning { background:rgba(255,149,0,.14); } body.ios .notice-error { background:rgba(255,59,48,.12); }
+body.ios .stat-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; }
+body.ios .stat-card { margin:0; padding:14px; background:var(--ios-fill); box-shadow:none; border-radius:14px; }
+body.ios .stat-label { font-size:12px; color:var(--ios-secondary); } body.ios .stat-value { font-size:26px; font-weight:700; letter-spacing:-.02em; }
+body.ios .meta-list { gap:8px 16px; } body.ios .meta-list b { color:var(--ios-secondary); }
+
+/* ---- buttons, forms, badges ---- */
+body.ios .btn { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:0 20px; border:0; border-radius:999px; font:600 16px var(--ios-font); letter-spacing:-.01em; cursor:pointer; transition:transform .25s var(--ios-spring), opacity .2s, background .2s; }
+body.ios .btn:active { transform:scale(.95); opacity:.85; }
+body.ios .btn-primary { background:var(--ios-blue); color:#fff !important; }
+body.ios .btn-outline { background:rgba(0,122,255,.12); color:var(--ios-blue) !important; border:0; }
+body.ios .btn-danger { background:var(--ios-red); color:#fff !important; }
+body.ios .btn-sm { min-height:34px; padding:0 14px; font-size:14px; }
+body.ios input[type=text], body.ios input[type=email], body.ios input[type=password], body.ios input[type=date], body.ios input[type=tel], body.ios input[type=search], body.ios input[type=number], body.ios select, body.ios textarea {
+  width:100%; min-height:44px; padding:10px 14px; border:1.5px solid transparent; border-radius:12px; background:var(--ios-fill); color:var(--ios-label); font:16px var(--ios-font); transition:border-color .2s, box-shadow .2s, background .2s; }
+body.ios input:focus, body.ios select:focus, body.ios textarea:focus { outline:0; border-color:var(--ios-blue); box-shadow:0 0 0 4px rgba(0,122,255,.15); background:var(--ios-card); }
+body.ios label { font-size:13px; font-weight:500; color:var(--ios-secondary); }
+body.ios .badge { border-radius:999px; font-weight:600; font-size:12px; padding:3px 10px; }
+body.ios .badge-success { background:rgba(52,199,89,.16); color:#1f8f3d; } body.ios .badge-warning { background:rgba(255,149,0,.18); color:#b86a00; }
+body.ios .badge-error { background:rgba(255,59,48,.14); color:#d70015; } body.ios .badge-info { background:rgba(0,122,255,.14); color:#0062cc; } body.ios .badge-neutral { background:var(--ios-fill); color:var(--ios-secondary); }
+body.ios .filter-bar { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px; align-items:end; background:transparent; }
+body.ios .table-wrap { margin:0 -4px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+body.ios table { border-collapse:collapse; width:100%; font-size:15px; }
+body.ios th { font-size:12px; text-transform:uppercase; letter-spacing:.04em; color:var(--ios-secondary); font-weight:600; background:transparent; border-bottom:1px solid var(--ios-sep); }
+body.ios td { border-bottom:1px solid var(--ios-sep); } body.ios tr:last-child td { border-bottom:0; }
+body.ios .context-picker { background:var(--ios-card); border-radius:18px; padding:12px 16px; margin:14px 16px; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+body.ios .section .context-picker { margin:0 0 12px; padding:0; box-shadow:none; background:transparent; }
+
+/* ---- toasts as iOS banners ---- */
+body.ios .toast-stack { position:fixed; top:calc(env(safe-area-inset-top) + 8px); left:12px; right:12px; z-index:100; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+body.ios .toast { width:100%; max-width:520px; padding:14px 16px; border-radius:18px; background:var(--ios-glass); -webkit-backdrop-filter:blur(24px); backdrop-filter:blur(24px); color:var(--ios-label); box-shadow:0 8px 30px rgba(0,0,0,.16); font-size:15px; animation:ios-banner .55s var(--ios-spring) both, ios-fade .3s reverse 4.4s forwards; border-left:0; }
+body.ios .toast-success { box-shadow:0 8px 30px rgba(52,199,89,.28); } body.ios .toast-error { box-shadow:0 8px 30px rgba(255,59,48,.3); }
+
+/* ---- components used by the redesigned teacher / parent pages ---- */
+.avatar { width:56px; height:56px; border-radius:50%; object-fit:cover; background:linear-gradient(135deg,#7aa7ff,#5856d6); color:#fff; display:inline-grid; place-items:center; font-weight:700; font-size:20px; flex:none; box-shadow:0 2px 8px rgba(0,0,0,.18); }
+.avatar-lg { width:84px; height:84px; font-size:30px; } .avatar-sm { width:40px; height:40px; font-size:15px; }
+.ios-hero { display:flex; align-items:center; gap:14px; }
+.ios-hero h2 { margin:0 !important; font-size:20px !important; text-transform:none !important; letter-spacing:-.02em !important; color:var(--ios-label) !important; }
+.ios-hero p { margin:2px 0 0; color:var(--ios-secondary); font-size:14px; }
+.chip-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.chip { padding:5px 12px; border-radius:999px; background:rgba(0,122,255,.12); color:var(--ios-blue); font-size:13px; font-weight:600; }
+.ring { position:relative; width:76px; height:76px; flex:none; }
+.ring svg { width:100%; height:100%; transform:rotate(-90deg); }
+.ring circle { fill:none; stroke-width:8; stroke-linecap:round; }
+.ring .track { stroke:var(--ios-fill); }
+.ring .bar { stroke:var(--ring-color,var(--ios-green)); stroke-dasharray:var(--c); stroke-dashoffset:var(--o); animation:ios-ring 1.1s var(--ios-ease) .2s both; }
+.ring .num { position:absolute; inset:0; display:grid; place-items:center; font-weight:700; font-size:17px; letter-spacing:-.02em; }
+.ios-row { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid var(--ios-sep); color:var(--ios-label) !important; transition:background .2s, transform .2s var(--ios-spring); }
+.ios-row:last-child { border-bottom:0; } .ios-row:active { transform:scale(.985); background:var(--ios-fill); border-radius:12px; }
+.ios-row .grow { flex:1; min-width:0; } .ios-row .title { font-weight:600; font-size:16px; } .ios-row .sub { color:var(--ios-secondary); font-size:13px; }
+.ios-row .chev { color:var(--ios-secondary); opacity:.6; }
+.ios-row .ico { width:34px; height:34px; border-radius:9px; display:grid; place-items:center; color:#fff; flex:none; }
+.ios-row .ico svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+.tile-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.tile { background:var(--ios-fill); border-radius:16px; padding:14px 10px; text-align:center; transition:transform .25s var(--ios-spring); }
+.tile:active { transform:scale(.95); } .tile .n { font-size:26px; font-weight:700; letter-spacing:-.02em; } .tile .l { font-size:12px; color:var(--ios-secondary); }
+.segmented { display:flex; gap:2px; padding:2px; border-radius:10px; background:var(--ios-fill); overflow-x:auto; }
+.segmented a { flex:1; text-align:center; padding:7px 12px; border-radius:8px; font-size:14px; font-weight:600; color:var(--ios-label) !important; white-space:nowrap; transition:background .25s, box-shadow .25s, transform .25s var(--ios-spring); }
+.segmented a.on { background:var(--ios-card); box-shadow:0 1px 4px rgba(0,0,0,.14); }
+.sheet-photo { display:flex; align-items:center; gap:14px; }
+body.ios-plain { background:var(--ios-bg); }
+
+@media (max-width:520px) { body.ios .context-picker, body.ios .filter-bar { grid-template-columns:1fr; } body.ios .context-picker .btn { width:100%; } }
+@media (min-width:900px) { body.ios .ios-tabbar-inner { max-width:560px; } }
+@media (prefers-reduced-motion: reduce) {
+  body.ios *, body.ios *::before, body.ios *::after, .ios-enter, .ios-list > * { animation:none !important; transition:none !important; }
+}
