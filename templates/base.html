@@ -1,0 +1,184 @@
+{% from "partials/ios_icons.html" import icon %}
+{% set ios = g.user is not none and g.user.role in ('teacher', 'attendance_operator', 'parent') %}
+{% set page_title_text %}{% block page_title %}Dashboard{% endblock %}{% endset %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>{% block title %}Attendance System{% endblock %} · {{ school_settings.school_name if school_settings else 'School Attendance' }}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ios.css') }}">
+{% if school_logo_url %}<link rel="icon" href="{{ school_logo_url }}">{% endif %}
+{% block head %}{% endblock %}
+</head>
+<body class="{{ 'ios' if ios }}">
+<a class="skip-link" href="#main">Skip to content</a>
+<div id="busy-bar" class="busy-bar" hidden></div>
+{% if g.user %}
+<div class="app-shell">
+  {% if ios %}
+  <header class="ios-nav" id="iosNav">
+    <div class="ios-nav-bar">
+      <span class="ios-nav-small">{{ page_title_text }}</span>
+      <div class="ios-nav-actions">
+        {% if g.user.role == 'parent' %}<a class="ios-icon-btn" href="{{ url_for('parent.notifications') }}" aria-label="Notifications">{{ icon('bell') }}</a>{% endif %}
+        <a class="ios-icon-btn" href="{{ url_for('auth.logout') }}" aria-label="Log out">{{ icon('logout') }}</a>
+      </div>
+    </div>
+    <h1 class="ios-large-title">{{ page_title_text }}</h1>
+  </header>
+  {% else %}
+  <button class="drawer-toggle" id="drawerToggle" aria-label="Toggle navigation">
+    <span></span><span></span><span></span>
+  </button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-brand school-brand">
+      {% include "partials/brand_header.html" %}
+    </div>
+    <nav class="sidebar-nav">
+      {% if g.user.role in ('super_admin', 'school_admin') %}
+        {% set ep = request.endpoint or '' %}
+        <a href="{{ url_for('school_admin.dashboard') }}" class="nav-link {% if ep == 'school_admin.dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="{{ url_for('admin_people.students_list') }}" class="nav-link {% if ep.startswith('admin_people.student') %}active{% endif %}">Students</a>
+        <a href="{{ url_for('admin_people.parents_list') }}" class="nav-link {% if ep.startswith('admin_people.parent') or ep.endswith('_child') %}active{% endif %}">Parents</a>
+        <a href="{{ url_for('admin_people.teachers_list') }}" class="nav-link {% if ep.startswith('admin_people.teacher') %}active{% endif %}">Teachers</a>
+        <a href="{{ url_for('school_admin.classes_list') }}" class="nav-link {% if ep == 'school_admin.classes_list' %}active{% endif %}">Classes</a>
+        <a href="{{ url_for('reports.records_search') }}" class="nav-link {% if ep in ('reports.records_search','reports.sessions_list','reports.low_attendance_report') %}active{% endif %}">Attendance</a>
+        <a href="{{ url_for('school_admin.academic_sessions') }}" class="nav-link {% if ep.startswith('school_admin.academic') or 'term' in ep %}active{% endif %}">Academic Sessions</a>
+        <a href="{{ url_for('reports.index') }}" class="nav-link {% if ep in ('reports.index','reports.class_report','reports.daily_report','reports.term_report','reports.session_report','reports.student_report') %}active{% endif %}">Reports</a>
+        <a href="{{ url_for('school_admin.settings_page') }}" class="nav-link {% if ep.startswith('school_admin.settings') %}active{% endif %}">Settings</a>
+        <div class="nav-group">More</div>
+        <a href="{{ url_for('school_admin.subjects_list') }}" class="nav-link {% if ep.startswith('school_admin.subject') %}active{% endif %}">Subjects &amp; Assignments</a>
+        <a href="{{ url_for('school_admin.sections') }}" class="nav-link {% if ep in ('school_admin.sections','school_admin.departments') %}active{% endif %}">Sections &amp; Depts</a>
+        <a href="{{ url_for('admin_biometrics.enrollment_list') }}" class="nav-link {% if ep.startswith('admin_biometrics') %}active{% endif %}">Face Enrollment</a>
+        <a href="{{ url_for('admin_devices.devices_list') }}" class="nav-link {% if ep.startswith('admin_devices') %}active{% endif %}">Devices</a>
+        <a href="{{ url_for('admin_ops.sync_review') }}" class="nav-link {% if ep.startswith('admin_ops.sync') %}active{% endif %}">Offline Sync</a>
+        <a href="{{ url_for('admin_ops.notifications_queue') }}" class="nav-link {% if ep == 'admin_ops.notifications_queue' %}active{% endif %}">Notifications</a>
+        <a href="{{ url_for('school_admin.audit_log') }}" class="nav-link {% if ep == 'school_admin.audit_log' %}active{% endif %}">Audit Log</a>
+        {% if g.user.role == 'super_admin' %}
+        <div class="nav-group">Platform</div>
+        <a href="{{ url_for('school_admin.schools') }}" class="nav-link {% if ep == 'school_admin.schools' %}active{% endif %}">Schools</a>
+        <a href="{{ url_for('admin_ops.backup') }}" class="nav-link {% if ep == 'admin_ops.backup' %}active{% endif %}">Backup</a>
+        {% endif %}
+      {% elif g.user.role in ('teacher', 'attendance_operator') %}
+        {% set ep = request.endpoint or '' %}
+        <a href="{{ url_for('teacher.dashboard') }}" class="nav-link {% if ep == 'teacher.dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="{{ url_for('teacher.my_classes') }}" class="nav-link {% if ep == 'teacher.my_classes' %}active{% endif %}">My Classes</a>
+        <a href="{{ url_for('teacher.take_attendance') }}" class="nav-link {% if ep in ('teacher.take_attendance','teacher.scanner','teacher.manual_attendance') %}active{% endif %}">Take Attendance</a>
+        <a href="{{ url_for('teacher.history') }}" class="nav-link {% if ep == 'teacher.history' %}active{% endif %}">Attendance History</a>
+        <a href="{{ url_for('teacher.reports_home') }}" class="nav-link {% if ep.startswith('reports.') or ep == 'teacher.reports_home' %}active{% endif %}">Reports</a>
+        <a href="{{ url_for('teacher.profile') }}" class="nav-link {% if ep == 'teacher.profile' %}active{% endif %}">Profile</a>
+      {% elif g.user.role == 'parent' %}
+        {% set ep = request.endpoint or '' %}
+        <a href="{{ url_for('parent.dashboard') }}" class="nav-link {% if ep == 'parent.dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="{{ url_for('parent.children') }}" class="nav-link {% if ep == 'parent.children' %}active{% endif %}">My Children</a>
+        <a href="{{ url_for('parent.attendance') }}" class="nav-link {% if ep == 'parent.attendance' or ep == 'reports.student_report' %}active{% endif %}">Attendance</a>
+        <a href="{{ url_for('parent.reports') }}" class="nav-link {% if ep == 'parent.reports' %}active{% endif %}">Reports</a>
+        <a href="{{ url_for('parent.notifications') }}" class="nav-link {% if ep == 'parent.notifications' %}active{% endif %}">Notifications</a>
+        <a href="{{ url_for('parent.profile') }}" class="nav-link {% if ep == 'parent.profile' %}active{% endif %}">Profile</a>
+      {% elif g.user.role == 'student' %}
+        {% set ep = request.endpoint or '' %}
+        <a href="{{ url_for('student.dashboard') }}" class="nav-link {% if ep == 'student.dashboard' %}active{% endif %}">Dashboard</a>
+        <a href="{{ url_for('reports.index') }}" class="nav-link {% if ep == 'reports.student_report' %}active{% endif %}">My Attendance History</a>
+        <a href="{{ url_for('student.qr_checkin') }}" class="nav-link {% if ep.startswith('student.qr') %}active{% endif %}">QR Check-in</a>
+        <a href="{{ url_for('student.account_settings') }}" class="nav-link {% if ep == 'student.account_settings' %}active{% endif %}">Account Settings</a>
+      {% elif g.user.role == 'auditor' %}
+        <a href="{{ url_for('school_admin.audit_log') }}" class="nav-link">Audit Log</a>
+        <a href="{{ url_for('reports.sessions_list') }}" class="nav-link">Sessions</a>
+        <a href="{{ url_for('reports.records_search') }}" class="nav-link">Attendance Records</a>
+      {% endif %}
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar">{{ g.user.full_name[:1] }}</div>
+        <div>
+          <div class="user-name">{{ g.user.full_name }}</div>
+          <div class="user-role">{{ g.user.role.replace('_', ' ')|capitalize }}</div>
+        </div>
+      </div>
+      <a href="{{ url_for('auth.logout') }}" class="logout-link">Log out</a>
+    </div>
+  </aside>
+
+  {% endif %}
+
+  <div class="main-area">
+    {% if not ios %}
+    <header class="topbar">
+      <div class="topbar-title">{{ page_title_text }}</div>
+      <div class="topbar-context">
+        {% if active_session %}<span class="badge badge-info">{{ active_session.name }}</span>{% else %}<span class="badge badge-warning">No active session</span>{% endif %}
+        {% if active_term %}<span class="badge badge-success">{{ active_term.name }}</span>{% elif active_session %}<span class="badge badge-warning">No active term</span>{% endif %}
+        {% if g.user.role == 'super_admin' and all_schools and all_schools|length > 1 %}
+        <form method="post" action="{{ url_for('school_admin.switch_school') }}" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label class="sr-only" for="school-switch">School</label>
+          <select id="school-switch" name="school_id" onchange="this.form.submit()">
+            {% for sch in all_schools %}<option value="{{ sch.id }}" {% if sch.id == g.school_id %}selected{% endif %}>{{ sch.name }}</option>{% endfor %}
+          </select>
+        </form>
+        {% endif %}
+      </div>
+    </header>
+    {% endif %}
+
+    <main class="content" id="main">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="toast-stack">
+            {% for category, message in messages %}
+              <div class="toast toast-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {% if ios %}
+  {% set ep = request.endpoint or '' %}
+  <nav class="ios-tabbar" aria-label="Main">
+    <div class="ios-tabbar-inner">
+    {% if g.user.role == 'parent' %}
+      <a class="ios-tab {{ 'active' if ep == 'parent.dashboard' }}" href="{{ url_for('parent.dashboard') }}">{{ icon('home') }}<span>Home</span></a>
+      <a class="ios-tab {{ 'active' if ep == 'parent.children' }}" href="{{ url_for('parent.children') }}">{{ icon('users') }}<span>Children</span></a>
+      <a class="ios-tab {{ 'active' if ep in ('parent.attendance', 'reports.student_report') }}" href="{{ url_for('parent.attendance') }}">{{ icon('check') }}<span>Attendance</span></a>
+      <a class="ios-tab {{ 'active' if ep == 'parent.reports' }}" href="{{ url_for('parent.reports') }}">{{ icon('doc') }}<span>Reports</span></a>
+      <a class="ios-tab {{ 'active' if ep in ('parent.profile', 'parent.notifications', 'teacher.profile') }}" href="{{ url_for('parent.profile') }}">{{ icon('person') }}<span>Profile</span></a>
+    {% else %}
+      <a class="ios-tab {{ 'active' if ep == 'teacher.dashboard' }}" href="{{ url_for('teacher.dashboard') }}">{{ icon('home') }}<span>Home</span></a>
+      <a class="ios-tab {{ 'active' if ep == 'teacher.my_classes' }}" href="{{ url_for('teacher.my_classes') }}">{{ icon('users') }}<span>Classes</span></a>
+      <a class="ios-tab {{ 'active' if ep in ('teacher.take_attendance', 'teacher.scanner', 'teacher.manual_attendance') }}" href="{{ url_for('teacher.take_attendance') }}">{{ icon('check') }}<span>Attendance</span></a>
+      <a class="ios-tab {{ 'active' if ep == 'teacher.history' }}" href="{{ url_for('teacher.history') }}">{{ icon('clock') }}<span>History</span></a>
+      <a class="ios-tab {{ 'active' if ep in ('teacher.profile', 'teacher.reports_home') or ep.startswith('reports.') }}" href="{{ url_for('teacher.profile') }}">{{ icon('person') }}<span>Profile</span></a>
+    {% endif %}
+    </div>
+  </nav>
+  {% endif %}
+</div>
+{% else %}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="toast-stack toast-stack-standalone">
+        {% for category, message in messages %}
+          <div class="toast toast-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block auth_content %}{% endblock %}
+{% endif %}
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
