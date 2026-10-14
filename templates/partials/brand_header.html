@@ -1,0 +1,10 @@
+{% if school_logo_url %}
+  <img class="school-logo" src="{{ school_logo_url }}" alt="{{ school_settings.school_name }} logo">
+{% else %}
+  <div class="school-logo-placeholder" aria-hidden="true">{{ (school_settings.school_name if school_settings else 'S')[:2]|upper }}</div>
+{% endif %}
+<div>
+  <div class="school-name-en">{{ school_settings.school_name if school_settings else 'School Attendance System' }}</div>
+  {% if school_settings and school_settings.school_name_arabic %}<div class="school-name-ar">{{ school_settings.school_name_arabic }}</div>{% endif %}
+  {% if school_settings and school_settings.motto %}<div class="school-motto">{{ school_settings.motto }}</div>{% endif %}
+</div>

@@ -1,0 +1,41 @@
+{% macro pct_badge(p) -%}
+  {%- if p is none %}<span class="badge badge-neutral">—</span>
+  {%- elif p >= 75 %}<span class="badge badge-success">{{ p }}%</span>
+  {%- elif p >= 50 %}<span class="badge badge-warning">{{ p }}%</span>
+  {%- else %}<span class="badge badge-error">{{ p }}%</span>{% endif -%}
+{%- endmacro %}
+
+{% macro status_badge(s) -%}
+  {%- if s == 'present' %}<span class="badge badge-success">Present</span>
+  {%- elif s == 'late' %}<span class="badge badge-warning">Late</span>
+  {%- elif s == 'absent' %}<span class="badge badge-error">Absent</span>
+  {%- else %}<span class="badge badge-info">{{ s|replace('_',' ')|capitalize }}</span>{% endif -%}
+{%- endmacro %}
+
+{% macro lifecycle_badge(s) -%}
+  {%- if s == 'active' %}<span class="badge badge-success">Active</span>
+  {%- elif s in ('upcoming',) %}<span class="badge badge-info">Upcoming</span>
+  {%- elif s in ('completed','closed') %}<span class="badge badge-neutral">{{ s|capitalize }}</span>
+  {%- else %}<span class="badge badge-warning">{{ s|capitalize }}</span>{% endif -%}
+{%- endmacro %}
+
+{# Session + term picker (GET form). show_all_terms adds an "All terms" choice. #}
+{% macro context_picker(ctx, args=none, all_terms=true, extra='') -%}
+<form method="get" class="filter-bar context-picker" data-autosubmit>
+  <div class="form-group">
+    <label for="f-session">Academic session</label>
+    <select id="f-session" name="session_id">
+      {% for s in ctx.sessions %}<option value="{{ s.id }}" {% if ctx.session and ctx.session.id == s.id %}selected{% endif %}>{{ s.name }}{% if s.status == 'active' %} (current){% endif %}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="f-term">Term</label>
+    <select id="f-term" name="term_id">
+      {% if all_terms %}<option value="all" {% if not ctx.term %}selected{% endif %}>All terms</option>{% endif %}
+      {% for t in ctx.terms %}<option value="{{ t.id }}" {% if ctx.term and ctx.term.id == t.id %}selected{% endif %}>{{ t.name }}{% if t.status == 'active' %} (active){% endif %}</option>{% endfor %}
+    </select>
+  </div>
+  {{ extra }}
+  <div class="form-group"><button type="submit" class="btn btn-outline">Apply</button></div>
+</form>
+{%- endmacro %}

@@ -1,0 +1,31 @@
+{% macro icon(name) -%}
+<svg viewBox="0 0 24 24" aria-hidden="true">
+{%- if name == 'home' %}<path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>
+{%- elif name == 'users' %}<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.5 6-5.5s6 2.2 6 5.5"/><circle cx="17" cy="9" r="2.4"/><path d="M16.5 14.6c2.9.2 4.5 2 4.5 4.4"/>
+{%- elif name == 'check' %}<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/>
+{%- elif name == 'clock' %}<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/>
+{%- elif name == 'doc' %}<path d="M7 3h7l5 5v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>
+{%- elif name == 'bell' %}<path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z"/><path d="M10 21h4"/>
+{%- elif name == 'person' %}<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.2 3.6-7 8-7s8 2.8 8 7"/>
+{%- elif name == 'chevron' %}<path d="m9 6 6 6-6 6"/>
+{%- elif name == 'logout' %}<path d="M10 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h5M16 8l4 4-4 4M20 12H9"/>
+{%- elif name == 'key' %}<circle cx="8" cy="15" r="4"/><path d="m11 12 8-8M16 7l3 3"/>
+{%- endif -%}
+</svg>
+{%- endmacro %}
+
+{# Animated attendance ring. pct may be none. #}
+{% macro ring(pct, size=76) -%}
+{%- set c = 213.6 -%}
+{%- set p = pct if pct is not none else 0 -%}
+{%- set color = 'var(--ios-green)' if p >= 75 else ('var(--ios-orange)' if p >= 50 else 'var(--ios-red)') -%}
+<div class="ring" style="--c:{{ c }};--o:{{ (c * (1 - p / 100))|round(1) }};--ring-color:{{ color }};width:{{ size }}px;height:{{ size }}px" role="img" aria-label="Attendance {{ pct if pct is not none else 'not recorded' }}%">
+  <svg viewBox="0 0 80 80"><circle class="track" cx="40" cy="40" r="34"/><circle class="bar" cx="40" cy="40" r="34"/></svg>
+  <div class="num">{{ ('%g' % p) ~ '%' if pct is not none else '—' }}</div>
+</div>
+{%- endmacro %}
+
+{% macro avatar(kind, id, has_photo, name, size='') -%}
+{%- if has_photo %}<img class="avatar {{ size }}" src="{{ url_for('media.teacher_photo' if kind == 'teacher' else 'media.student_photo', **({'teacher_id': id} if kind == 'teacher' else {'student_id': id})) }}" alt="{{ name }}">
+{%- else %}<span class="avatar {{ size }}" aria-hidden="true">{{ (name or '?')[:1]|upper }}</span>{% endif -%}
+{%- endmacro %}
