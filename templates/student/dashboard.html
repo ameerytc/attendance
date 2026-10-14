@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import pct_badge, status_badge, context_picker %}
+{% block title %}My Attendance{% endblock %}
+{% block page_title %}My Attendance{% endblock %}
+{% block content %}
+{% if student is none %}
+<div class="section"><p>No student profile is linked to this account. Please contact the school office.</p></div>
+{% else %}
+{% if low_attendance_warning %}<div class="notice notice-error">Your attendance is below the school's {{ settings.attendance_threshold_pct }}% threshold. Please see your class teacher.</div>{% endif %}
+<div class="section">{{ context_picker(ctx) }}</div>
+<div class="stat-grid">
+  <div class="card stat-card"><div class="stat-label">Admission No.</div><div class="stat-value" style="font-size:18px;">{{ student.admission_number }}</div></div>
+  <div class="card stat-card"><div class="stat-label">Class</div><div class="stat-value" style="font-size:18px;">{{ student.class_name or '—' }}</div></div>
+  <div class="card stat-card"><div class="stat-label">Attendance</div><div class="stat-value">{{ (overall.pct ~ '%') if overall.pct is not none else '—' }}</div></div>
+  <div class="card stat-card"><div class="stat-label">Present / Absent</div><div class="stat-value" style="font-size:20px;">{{ overall.present + overall.late }} / {{ overall.absent }}</div></div>
+</div>
+<div class="section"><h2>By subject</h2><div class="table-wrap"><table>
+  <thead><tr><th>Subject</th><th>Entries</th><th>Attended</th><th>%</th></tr></thead>
+  <tbody>{% for c in per_subject %}<tr {% if c.category == 'QURANIC' %}class="subject-quranic"{% endif %}><td>{{ c.subject_name }}</td><td>{{ c.total }}</td><td>{{ c.present + c.late }}</td><td>{{ pct_badge(c.pct) }}</td></tr>
+  {% else %}<tr><td colspan="4">No attendance recorded for this selection.</td></tr>{% endfor %}</tbody></table></div></div>
+<div class="section"><h2>Recent attendance</h2><div class="table-wrap"><table>
+  <thead><tr><th>Date</th><th>Term</th><th>Subject</th><th>Status</th></tr></thead>
+  <tbody>{% for r in recent %}<tr><td>{{ r.session_date }}</td><td>{{ r.term_name }}</td><td>{{ r.subject_name }}</td><td>{{ status_badge(r.status) }}</td></tr>
+  {% else %}<tr><td colspan="4">No attendance recorded yet.</td></tr>{% endfor %}</tbody></table></div>
+  <a class="btn btn-outline btn-sm" href="{{ url_for('reports.student_report', student_id=student.id, session_id=ctx.session.id if ctx.session else '', term_id=ctx.term.id if ctx.term else 'all') }}">Full history &amp; export</a></div>
+{% endif %}
+{% endblock %}
