@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_badge, context_picker %}
+{% from "partials/ios_icons.html" import icon, ring, avatar %}
+{% block title %}Parent Dashboard{% endblock %}
+{% block page_title %}My Children{% endblock %}
+{% block content %}
+{{ context_picker(ctx) }}
+{% for c in cards %}
+<div class="section">
+  <div class="ios-hero">
+    {{ avatar('student', c.student.id, c.student.photo_path, c.student.first_name, 'avatar-lg') }}
+    <div class="grow" style="flex:1;"><h2>{{ c.student.first_name }} {{ c.student.surname }}</h2><p>{{ c.student.class_name or 'No class' }} · {{ ctx.term.name if ctx.term else 'All terms' }}</p></div>
+    {{ ring(c.totals.pct) }}
+  </div>
+  <div class="tile-row" style="margin-top:14px;">
+    <div class="tile"><div class="n">{{ c.totals.present + c.totals.late }}</div><div class="l">Present</div></div>
+    <div class="tile"><div class="n">{{ c.totals.absent }}</div><div class="l">Absent</div></div>
+    <div class="tile"><div class="n">{{ c.days.days_recorded }}</div><div class="l">Days recorded</div></div>
+  </div>
+  <div class="ios-list" style="margin-top:8px;">
+    {% for r in c.recent %}<div class="ios-row"><div class="grow"><div class="title">{{ r.subject_name }}</div><div class="sub">{{ r.session_date }} · {{ r.term_name }}</div></div>{{ status_badge(r.status) }}</div>
+    {% else %}<p style="color:var(--ios-secondary);">No attendance recorded yet.</p>{% endfor %}
+  </div>
+  <a class="btn btn-outline" style="width:100%;margin-top:10px;" href="{{ url_for('reports.student_report', student_id=c.student.id, session_id=ctx.session.id if ctx.session else '', term_id=ctx.term.id if ctx.term else 'all') }}">Attendance history</a>
+</div>
+{% else %}<div class="section"><p>No children are linked to your account yet. Please contact the school office.</p></div>{% endfor %}
+{% endblock %}

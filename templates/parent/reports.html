@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block content %}
+<div class="section">
+  <p>Download an attendance report for a child. Choose a term to get that term's records only, or "All terms" for the whole session.</p>
+  {% for c in children %}
+  <div class="card" style="margin-bottom:10px;"><strong>{{ c.first_name }} {{ c.surname }}</strong>
+    <form method="get" action="{{ url_for('reports.student_report', student_id=c.id) }}" class="filter-bar">
+      <div class="form-group"><label for="s{{ c.id }}">Session</label><select id="s{{ c.id }}" name="session_id">{% for s in ctx.sessions %}<option value="{{ s.id }}" {% if ctx.session and ctx.session.id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></div>
+      <div class="form-group"><label for="t{{ c.id }}">Term</label><select id="t{{ c.id }}" name="term_id"><option value="all">All terms</option>{% for t in ctx.terms %}<option value="{{ t.id }}" {% if ctx.term and ctx.term.id == t.id %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+      <div class="form-group"><button class="btn btn-primary btn-sm" type="submit">Open report</button></div>
+    </form></div>
+  {% else %}<p>No children linked.</p>{% endfor %}
+</div>
+{% endblock %}

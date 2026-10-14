@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}My Children{% endblock %}
+{% block page_title %}My Children{% endblock %}
+{% block content %}
+<div class="section"><div class="table-wrap"><table>
+  <thead><tr><th>Name</th><th>Admission No.</th><th>Class</th><th>Status</th><th></th></tr></thead>
+  <tbody>{% for c in children %}<tr><td>{{ c.first_name }} {{ c.surname }}</td><td>{{ c.admission_number }}</td><td>{{ c.class_name or '—' }}</td><td>{{ c.status|capitalize }}</td>
+    <td><a href="{{ url_for('reports.student_report', student_id=c.id, session_id=ctx.session.id if ctx.session else '', term_id=ctx.term.id if ctx.term else 'all') }}">Attendance history</a></td></tr>
+  {% else %}<tr><td colspan="5">No children linked.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}
