@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}My Classes{% endblock %}
+{% block page_title %}My Classes{% endblock %}
+{% block content %}
+{% for c in classes %}
+<div class="section card">
+  <h2>{{ c.row.name }}</h2>
+  <p>Subjects: {% for a in c.subjects %}<span class="badge badge-info">{{ a.subject_name }} ({{ a.term_name }})</span> {% else %}—{% endfor %}</p>
+  <details><summary>{{ c.students|length }} students</summary>
+    <ul>{% for s in c.students %}<li><a href="{{ url_for('reports.student_report', student_id=s.id) }}">{{ s.first_name }} {{ s.surname }}</a> — {{ s.admission_number }}</li>{% endfor %}</ul></details>
+  <div class="actions" style="margin-top:8px;"><a class="btn btn-outline btn-sm" href="{{ url_for('reports.class_report', class_id=c.row.id) }}">Class report</a></div>
+</div>
+{% else %}<div class="section"><p>You have no assigned classes yet.</p></div>{% endfor %}
+{% endblock %}

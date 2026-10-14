@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import status_badge %}
+{% block title %}Manual Attendance{% endblock %}
+{% block page_title %}Manual Attendance — {{ session.session_code }}{% endblock %}
+{% block content %}
+<div class="section">
+  <p style="color:var(--color-text-muted);">Use this when face recognition or QR fails. Every manual entry is tagged "manual" and logged with your name and the time.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Admission No.</th><th>Name</th><th>Current</th><th>Record</th></tr></thead>
+    <tbody>
+    {% for s in roster %}
+      <tr><td>{{ s.admission_number }}</td><td>{{ s.first_name }} {{ s.surname }}</td>
+        <td>{% if s.marked_status %}{{ status_badge(s.marked_status) }}{% else %}<span class="badge badge-neutral">Not marked</span>{% endif %}</td>
+        <td>{% if not s.marked_status and session.status == 'active' %}
+          <form method="post" class="actions"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="student_id" value="{{ s.id }}">
+            <label class="sr-only" for="st{{ s.id }}">Status for {{ s.first_name }}</label>
+            <select id="st{{ s.id }}" name="status">{% for st in statuses %}<option value="{{ st }}">{{ st|capitalize }}</option>{% endfor %}</select>
+            <button type="submit" class="btn btn-outline btn-sm">Save</button></form>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="4">No active students found in this class.</td></tr>{% endfor %}
+    </tbody></table></div>
+  <a href="{{ url_for('teacher.scanner', session_id=session.id) }}" class="btn btn-outline">Back to scanner</a>
+</div>
+{% endblock %}

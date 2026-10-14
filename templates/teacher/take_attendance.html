@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% from "partials/macros.html" import lifecycle_badge, context_picker %}
+{% block title %}Take Attendance{% endblock %}
+{% block page_title %}Take Attendance{% endblock %}
+{% block content %}
+<div class="section">
+  {{ context_picker(ctx, all_terms=false) }}
+  <p style="color:var(--color-text-muted);font-size:13px;">Attendance is recorded under the term of the class/subject assignment and only while that term is active. Today is {{ today }}.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Class</th><th>Subject</th><th>Term</th><th>Term status</th><th></th></tr></thead>
+    <tbody>
+    {% for a in items %}
+      <tr><td>{{ a.class_name }}</td><td>{{ a.subject_name }}</td><td>{{ a.session_name }} · {{ a.term_name }}</td><td>{{ lifecycle_badge(a.term_status) }}</td>
+        <td>
+          {% if not a.can_start and not a.existing %}<span class="badge badge-warning">Term closed — read only</span>
+          {% elif a.existing and a.existing.status != 'closed' %}<a class="btn btn-primary btn-sm" href="{{ url_for('teacher.scanner', session_id=a.existing.id) }}">Continue</a>
+          {% elif a.existing %}<span class="badge badge-neutral">Taken today</span>
+          {% else %}<form method="post" action="{{ url_for('teacher.sessions_start') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="subject_assignment_id" value="{{ a.id }}"><button class="btn btn-primary btn-sm" type="submit">Start attendance</button></form>{% endif %}
+        </td></tr>
+    {% else %}<tr><td colspan="5">Nothing assigned to you for this term.</td></tr>{% endfor %}
+    </tbody></table></div>
+</div>
+{% endblock %}

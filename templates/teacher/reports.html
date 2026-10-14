@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}Reports{% endblock %}
+{% block content %}
+<div class="section">
+  <h2>Class attendance report</h2>
+  {% for c in classes %}
+  <div class="card" style="margin-bottom:10px;"><strong>{{ c.name }}</strong>
+    <form method="get" action="{{ url_for('reports.class_report', class_id=c.id) }}" class="filter-bar">
+      <div class="form-group"><label for="s{{ c.id }}">Session</label><select id="s{{ c.id }}" name="session_id">{% for s in ctx.sessions %}<option value="{{ s.id }}" {% if ctx.session and ctx.session.id == s.id %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></div>
+      <div class="form-group"><label for="t{{ c.id }}">Term</label><select id="t{{ c.id }}" name="term_id"><option value="all">All terms</option>{% for t in ctx.terms %}<option value="{{ t.id }}" {% if ctx.term and ctx.term.id == t.id %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+      <div class="form-group"><button class="btn btn-primary btn-sm" type="submit">Open</button></div>
+    </form></div>
+  {% else %}<p>You have no classes yet.</p>{% endfor %}
+</div>
+<div class="section"><a class="btn btn-outline" href="{{ url_for('reports.daily_report') }}">Daily report</a></div>
+{% endblock %}

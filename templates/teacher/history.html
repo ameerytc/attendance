@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Attendance History{% endblock %}
+{% block page_title %}Attendance History{% endblock %}
+{% block content %}
+<div class="section">
+  <form method="get" class="filter-bar">
+    <div class="form-group"><label for="f-session">Academic session</label>
+      <select id="f-session" name="session_id"><option value="">All</option>{% for s in ctx.sessions %}<option value="{{ s.id }}" {% if args.get('session_id') == s.id|string %}selected{% endif %}>{{ s.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="f-term">Term</label>
+      <select id="f-term" name="term_id"><option value="">All</option>{% for t in ctx.terms %}<option value="{{ t.id }}" {% if args.get('term_id') == t.id|string %}selected{% endif %}>{{ t.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="f-class">Class</label>
+      <select id="f-class" name="class_id"><option value="">All</option>{% for c in classes %}<option value="{{ c.id }}" {% if args.get('class_id') == c.id|string %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></div>
+    <div class="form-group"><label for="f-date">Date</label><input id="f-date" type="date" name="date" value="{{ args.get('date','') }}"></div>
+    <div class="form-group"><button class="btn btn-outline" type="submit">Filter</button></div>
+  </form>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>Term</th><th>Class</th><th>Subject</th><th>Present</th><th>Enrolled</th><th>Status</th></tr></thead>
+    <tbody>{% for s in sessions %}<tr><td>{{ s.session_date }}</td><td>{{ s.session_name }} · {{ s.term_name }}</td><td>{{ s.class_name }}</td><td>{{ s.subject_name }}</td><td>{{ s.present_count }}</td><td>{{ s.enrolled_count }}</td>
+      <td>{% if s.status == 'active' %}<span class="badge badge-success">Active</span>{% elif s.status == 'paused' %}<span class="badge badge-warning">Paused</span>{% else %}<span class="badge badge-neutral">Closed</span>{% endif %}</td></tr>
+    {% else %}<tr><td colspan="7">No attendance sessions match.</td></tr>{% endfor %}</tbody></table></div>
+</div>
+{% endblock %}
